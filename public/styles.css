@@ -1,0 +1,96 @@
+body {
+  background-color: lightgray;
+  font-family: Verdana, Geneva, Tahoma, sans-serif;
+  color: black;
+}
+
+h1 {
+  text-align: center;
+  margin: 0;
+}
+
+main {
+  display: flex;
+  justify-content: center;
+}
+
+#chatlog,
+#chatinput {
+  border: 1px solid brown;
+  background-color: ivory;
+  margin: 5px;
+}
+
+#chatlog,
+#chatinputwrapper {
+  width: 70%;
+}
+
+#chatlog {
+  padding-top: 5px;
+  height: 150px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  overflow: scroll;
+}
+
+.log {
+  font-size: 12px;
+  display: flex;
+  margin: 0 0 0 10px;
+  gap: 5px;
+  background-color: antiquewhite;
+}
+
+.msgcost {
+  background-color: goldenrod;
+  border: 1px solid gold;
+  border-radius: 5px;
+  color: yellow;
+  height: 15px;
+  padding: 3px;
+}
+
+.logname {
+  color: blue;
+}
+
+.logmessage {
+  color: red;
+}
+
+.logname,
+.logmessage {
+  display: flex;
+  align-items: center;
+}
+
+#chatinputwrapper {
+  margin: auto;
+}
+
+#chatinput,
+button {
+  height: 40px;
+  margin: 0;
+  padding: 0;
+}
+
+#chatinput {
+  padding-left: 10px;
+  width: 70%;
+}
+
+button {
+  background-color: brown;
+  color: ivory;
+  border: 1px solid ivory;
+  width: calc(30% - 6px);
+}
+
+/* --------------------- map stuff -------------------- */
+
+#map {
+  border: 2px solid green;
+}

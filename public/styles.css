@@ -1,28 +1,52 @@
+/* [---------------- ELEMENTS ----------------] */
 body {
   font-family: Verdana, Geneva, Tahoma, sans-serif;
-  color: black;
+  color: white;
+  background-color: #333333;
 }
 
 h1 {
   text-align: center;
-  margin: 0;
+  font-size: medium;
 }
 
-main {
-  display: flex;
-  justify-content: center;
+button {
+  background-color: #444444;
+  color: ivory;
+  border: 1px solid #222222;
+  height: 30px;
 }
 
-#chatlog,
-#chatinput {
-  border: 1px solid brown;
-  background-color: ivory;
-  margin: 5px;
+input,
+div,
+button {
+  border-radius: 5px;
 }
 
-#chatlog,
-#chatinputwrapper {
-  width: 70%;
+button:disabled {
+  background-color: lightgrey;
+  color: darkgrey;
+  border: 1px solid darkslategrey;
+}
+
+/* [------------------------------------------] */
+
+#speakbutton {
+  width: calc(100% - 20px);
+  height: 70px;
+  margin: 10px auto;
+  background-color: orange;
+  display: block;
+  font-size: 40px;
+}
+
+#map {
+  border: 2px solid white;
+}
+
+#chatlog {
+  border: 1px solid white;
+  background-color: lightgrey;
 }
 
 #chatlog {
@@ -32,6 +56,8 @@ main {
   flex-direction: column;
   gap: 5px;
   overflow: scroll;
+  margin: 3px 0 3px;
+  width: calc(100vw - 20px);
 }
 
 .log {
@@ -39,24 +65,17 @@ main {
   display: flex;
   margin: 0 0 0 10px;
   gap: 5px;
-  background-color: antiquewhite;
-}
-
-.msgcost {
-  background-color: goldenrod;
-  border: 1px solid gold;
-  border-radius: 5px;
-  color: yellow;
-  height: 15px;
-  padding: 3px;
+  background-color: white;
 }
 
 .logname {
-  color: blue;
+  color: #222222;
+  font-weight: bolder;
+  margin-left: 5px;
 }
 
 .logmessage {
-  color: red;
+  color: #333333;
 }
 
 .logname,
@@ -65,37 +84,24 @@ main {
   align-items: center;
 }
 
-#chatinputwrapper {
-  margin: auto;
+/* [---------------- ADVANCED STUFF ----------------] */
+
+#advancedtoggle {
+  position: absolute;
+  bottom: 5px;
+  right: 5px;
 }
 
-#chatinput,
-button {
-  height: 40px;
-  margin: 0;
-  padding: 0;
+#sendbutton {
+  width: calc(15% - 3px);
 }
 
 #chatinput {
-  padding-left: 10px;
-  width: 70%;
-}
-
-button {
-  background-color: brown;
-  color: ivory;
-  border: 1px solid ivory;
-  width: 200px;
-}
-
-button:disabled {
+  border: 1px solid white;
   background-color: lightgrey;
-  color: darkgrey;
-  border: 1px solid darkslategrey;
-}
-
-/* --------------------- map stuff -------------------- */
-
-#map {
-  border: 2px solid green;
+  width: calc(85% - 3px);
+  height: 30px;
+  margin: 0;
+  padding: 0;
+  padding-left: 10px;
 }

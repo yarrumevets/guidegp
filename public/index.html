@@ -4,47 +4,28 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>GuideGPT</title>
     <link rel="stylesheet" href="styles.css" />
+    <script src="main.js" type="module"></script>
   </head>
   <body>
-    <h1>GuideGPT</h1>
-    <button id="pollyButton">Polly Test</button>
-    <select name="pollyVoice" id="pollyVoice">
-      <!-- Commented out names did not work -->
-      <!-- <option value="Danielle">Danielle</option> -->
-      <option value="Salli" selected>Salli</option>
-      <option value="Kimberly">Kimberly</option>
-      <option value="Kendra">Kendra</option>
-      <option value="Joanna">Joanna</option>
-      <option value="Ivy">Ivy (kid)</option>
-      <!-- <option value="Ruth">Ruth</option> -->
-      <!-- <option value="Gregory">Gregory</option> -->
-      <!-- <option value="Kevin">Kevin</option> -->
-      <option value="Matthew">Matthew</option>
-      <option value="Justin">Justin (kid)</option>
-      <option value="Joey">Joey</option>
-      <!-- <option value="Stephen">Stephen</option> -->
-    </select>
-    <main>
-      <div id="chatlog">
-        <p class="log"></p>
-      </div>
-    </main>
-    <div id="chatinputwrapper">
-      <input type="text" id="chatinput" />
-      <button id="sendbutton">Send</button>
-      <button id="startlistening">Speak</button>
-      <span id="speaktext"></span>
+    <h1>&#129302; GuideGPT</h1>
+
+    <button id="speakbutton">&#128483; speak</button>
+
+    <div id="map" style="height: 400px; width: 100%"></div>
+
+    <div id="chatlog">
+      <p class="log"></p>
     </div>
-    <script src="main.js" type="module"></script>
 
-    <hr />
+    <span id="speaktext"></span>
 
-    <button id="getLocation">Get My Location</button>
-    <span id="mylocationtext"></span>
-
-    <hr />
-
-    <div>
+    <button id="advancedtoggle">Advanced Options</button>
+    <!-- Hidden advanced options and input -->
+    <div id="advanced" hidden>
+      <!-- Manual keyboard input -->
+      <input type="text" id="chatinput" />
+      <button id="sendbutton">send</button>
+      <!-- Manually enter a keyword and/or select a location type -->
       <h3>Find by Keyword and Type</h3>
       <label for="findkeyword">Keyword: </label>
       <input type="text" name="findkeyword" id="findkeyword" />
@@ -150,30 +131,40 @@
       <button id="findbutton">Find</button>
       <span>Top result:</span>
       <span id="findresult"></span>
+      <!-- Manually update the start/end points latitude/longitude GPS coords -->
+      <div>
+        <span>Start lat/lng: </span>
+        <input type="text" id="startlat" />
+        <input type="text" id="startlng" />
+        <span>Destination lat/lng: </span>
+        <input type="text" id="destlat" />
+        <input type="text" id="destlng" />
+      </div>
+
+      <button id="getdirections">Get Directions</button>
+      <button id="nextdirection">Play Next Step</button>
+      <div id="currentDirections">...</div>
+      <div id="directionsElement">...</div>
+
+      <!-- Initiate the Google map and start tracking the user -->
+      <button id="updateUserLocation">Start Tracking</button>
+      <div id="directionsElement"></div>
+      <p id="instructions"></p>
+      <!-- Choose a different Polly voice and hear a sample audio clip -->
+      <button id="pollyButton">Polly Test</button>
+      <select name="pollyVoice" id="pollyVoice">
+        <option value="Salli" selected>Salli</option>
+        <option value="Kimberly">Kimberly</option>
+        <option value="Kendra">Kendra</option>
+        <option value="Joanna">Joanna</option>
+        <option value="Ivy">Ivy (kid)</option>
+        <option value="Matthew">Matthew</option>
+        <option value="Justin">Justin (kid)</option>
+        <option value="Joey">Joey</option>
+      </select>
+      <!-- Manually re-fetch users' current location -->
+      <button id="getLocation">Get My Location</button>
+      <span id="mylocationtext"></span>
     </div>
-
-    <hr />
-
-    <div>
-      <span>Start lat/lng: </span>
-      <input type="text" id="startlat" />
-      <input type="text" id="startlng" />
-      <span>Destination lat/lng: </span>
-      <input type="text" id="destlat" />
-      <input type="text" id="destlng" />
-    </div>
-
-    <hr />
-
-    <button id="getdirections">Get Directions</button>
-    <button id="nextdirection">Next -></button>
-    <div id="currentDirections">...</div>
-    <div id="directionsElement">...</div>
-
-    <button id="updateUserLocation">Start Tracking</button>
-    <div id="directionsElement"></div>
-
-    <div id="map" style="height: 400px; width: 100%"></div>
-    <p id="instructions"></p>
   </body>
 </html>

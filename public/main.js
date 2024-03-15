@@ -6,18 +6,14 @@ const createChatLog = (username, message) => {
   const newLog = document.createElement("p");
   const logName = document.createElement("span");
   const logMessage = document.createElement("span");
-  const msgCost = document.createElement("span");
   newLog.classList.add("log");
   logName.classList.add("logname");
   logMessage.classList.add("logmessage");
-  msgCost.classList.add("msgcost");
   logName.innerHTML = username;
   logMessage.innerHTML = message;
-  newLog.append(msgCost);
   newLog.append(logName);
   newLog.append(logMessage);
   chatLog.append(newLog);
-  return msgCost;
 };
 
 // ---- GET THE API KEY FROM BACKEND ---
@@ -34,11 +30,10 @@ const googleApiKeyResponse = await fetch("./test", {
 }).catch((err) => console.error("Oh nurr! Error getting api key: ", err));
 const googleApiKeyJson = await googleApiKeyResponse.json();
 const googleApiKey = googleApiKeyJson.key;
-console.log("API KEY: ", googleApiKey);
 // --------------- end of google api key --------
 
 async function sendMessage(message) {
-  const myMsgCost = createChatLog("You", message);
+  createChatLog("You", message);
   const messageData = {
     message,
   };
@@ -50,7 +45,7 @@ async function sendMessage(message) {
     body: JSON.stringify(messageData),
   }).catch((err) => console.error("Error: ", err));
   const jsonResponse = await response.json();
-  const chatGPTMsgCost = createChatLog("Ai", jsonResponse.response);
+  createChatLog("GuideGPT", jsonResponse.response);
 
   speakBack(jsonResponse.response);
 
@@ -87,22 +82,15 @@ sendButton.onclick = () => {
 
 // ----------------------------------------- VOICE STUFF ----------------
 
-const startListeningButton = document.getElementById("startlistening");
-
-startListeningButton.addEventListener("click", () => {
+document.getElementById("speakbutton").addEventListener("click", () => {
   console.log("clicked!");
-
   const recognition = new webkitSpeechRecognition(); // or SpeechRecognition for non-webkit browsers
   recognition.lang = "en-US";
   recognition.start();
-
   recognition.onresult = function (event) {
     const text = event.results[0][0].transcript;
-    document.getElementById("speaktext").innerText = text; // Display the converted text
-
     doSend(text);
   };
-
   recognition.onerror = function (event) {
     console.error("Speech recognition error", event.error);
   };
@@ -308,7 +296,9 @@ const speakStep = (theSteps, index) => {
     theSteps[index].html_instructions
   );
   const spokenStepIndex = index + 1;
-  speakBack("Step " + spokenStepIndex + ". " + instructions);
+  const formattedStepText = "Step " + spokenStepIndex + ". " + instructions;
+  createChatLog("GuideGPT", formattedStepText);
+  speakBack(formattedStepText);
 };
 
 function updateUserLocation() {
@@ -415,6 +405,7 @@ const speakPolly = (message, name) => {
       message,
       name,
     });
+    return;
   }
   isSpeaking = true;
 
@@ -437,11 +428,11 @@ const speakPolly = (message, name) => {
 
       // Manage a speaking queue
       audio.onended = () => {
+        isSpeaking = false;
         if (speakQueue.length) {
           speakPolly(...Object.values(speakQueue[0]));
           speakQueue.shift();
         }
-        isSpeaking = false;
       };
 
       // Play the audio file.
@@ -455,3 +446,9 @@ document.getElementById("pollyButton").addEventListener("click", function () {
   const voiceName = document.getElementById("pollyVoice").value || "Joey";
   speakPolly("Hi there, my name is " + voiceName, voiceName);
 });
+
+document
+  .getElementById("advancedtoggle")
+  .addEventListener("click", function () {
+    document.getElementById("advanced").toggleAttribute("hidden");
+  });

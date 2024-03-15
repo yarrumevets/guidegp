@@ -20,14 +20,6 @@ const createChatLog = (username, message) => {
   return msgCost;
 };
 
-// const calcCost = (tokens, type) => {
-//   const costs = {
-//     prompt: 0.0000015, // 0.0015 / 1000,
-//     completion: 0.000002, // 0.002 / 1000,
-//   };
-//   return tokens * costs[type];
-// };
-
 // ---- GET THE API KEY FROM BACKEND ---
 const googleApiKeyMsgData = {
   bar: "bazooka",
@@ -62,13 +54,17 @@ async function sendMessage(message) {
 
   speakBack(jsonResponse.response);
 
-  // const promptCost = calcCost(jsonResponse.usage.prompt_tokens, "prompt");
-  // const completionCost = calcCost(
-  //   jsonResponse.usage.completion_tokens,
-  //   "completion"
-  // );
-  // myMsgCost.innerHTML = `$${promptCost.toFixed(7)}`;
-  // chatGPTMsgCost.innerHTML = `$${completionCost.toFixed(7)}`;
+  if (jsonResponse.type) {
+    const type = (document.getElementById("findtype").value =
+      jsonResponse.type);
+    let keyword;
+    if (jsonResponse.keyword) {
+      keyword = document.getElementById("findkeyword").value =
+        jsonResponse.keyword;
+    }
+
+    doFind(type, keyword);
+  }
 }
 
 const doSend = (prompt) => {
@@ -103,11 +99,8 @@ startListeningButton.addEventListener("click", () => {
   recognition.onresult = function (event) {
     const text = event.results[0][0].transcript;
     document.getElementById("speaktext").innerText = text; // Display the converted text
-    // speakBack("This is a hardcoded response. You said: " + text);
 
     doSend(text);
-    const myMsgCost = createChatLog("You", message);
-    console.log("spoken msg cost: ", myMsgCost);
   };
 
   recognition.onerror = function (event) {
@@ -115,223 +108,207 @@ startListeningButton.addEventListener("click", () => {
   };
 });
 
-function speakBack(text) {
-  const utterance = new SpeechSynthesisUtterance(text);
-  speechSynthesis.speak(utterance);
-}
+const speakBack = (text) => {
+  // Browser's built-in Speech:
+  // const utterance = new SpeechSynthesisUtterance(text);
+  // speechSynthesis.speak(utterance);
+  speakPolly(text, document.getElementById("pollyVoice").value);
+};
 
 // --------------------[ GEO LOCATION ]-------------------------
 
+const enableHighAccuracy = false; // false speeds up tracking but less accurate.
+
+let userInitialPosition = {};
+
+// Just get my current location.
+// @TODO: Refactor to combine with the find button and
 document.getElementById("getLocation").addEventListener("click", () => {
+  getMyCurrentLocation();
+});
+
+const getMyCurrentLocation = () => {
   document.getElementById("mylocationtext").innerHTML = ". . . fetching . . .";
   if ("geolocation" in navigator) {
-    navigator.geolocation.getCurrentPosition(async (position) => {
-      const { latitude, longitude } = position.coords;
-      document.getElementById("startlat").value = latitude;
-      document.getElementById("startlng").value = longitude;
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        const { latitude, longitude } = position.coords;
 
-      // Send this to the backend
-      const response = await fetch("/location", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ latitude, longitude }),
-      });
+        // apply the user start coords that are used by the maps api.
+        userInitialPosition.lat = position.coords.latitude;
+        userInitialPosition.lng = position.coords.longitude;
 
-      const data = await response.json();
-
-      document.getElementById("mylocationtext").innerHTML = data.address;
-    });
+        document.getElementById("startlat").value = latitude;
+        document.getElementById("startlng").value = longitude;
+        // Send this to the backend
+        const response = await fetch("./location", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ latitude, longitude }),
+        });
+        const data = await response.json();
+        document.getElementById("mylocationtext").innerHTML = data.address;
+      },
+      (error) => {
+        console.error("geolocation error: " + error);
+      },
+      {
+        enableHighAccuracy: enableHighAccuracy,
+      }
+    );
   } else {
     console.log("Geolocation is not supported by this browser.");
   }
+};
+
+// Find something based on my current location.
+document.getElementById("findbutton").addEventListener("click", () => {
+  doFind();
 });
 
-// find something
-document.getElementById("findbutton").addEventListener("click", () => {
+const doFind = (t, k) => {
   if ("geolocation" in navigator) {
-    const type = document.getElementById("findtype").value;
-    const keyword = document.getElementById("findkeyword").value;
-    navigator.geolocation.getCurrentPosition(async (position) => {
-      const { latitude, longitude } = position.coords;
-      // Send this to the backend
-      const response = await fetch("/find", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ latitude, longitude, type, keyword }),
-      });
+    const type = t || document.getElementById("findtype").value;
+    const keyword = k || document.getElementById("findkeyword").value;
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        const { latitude, longitude } = position.coords;
+        // Send this to the backend
+        const response = await fetch("./find", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ latitude, longitude, type, keyword }),
+        });
 
-      const data = await response.json();
-      console.log(data); // Log the reverse-geocoded address
+        const data = await response.json();
+        console.log(data); // Log the reverse-geocoded address
 
-      const topResult = data.results[0];
+        const topResult = data.results[0];
 
-      document.getElementById("findresult").innerHTML = topResult.name;
-      document.getElementById("destlat").value =
-        topResult.geometry.location.lat;
-      document.getElementById("destlng").value =
-        topResult.geometry.location.lng;
-    });
+        document.getElementById("findresult").innerHTML = topResult.name;
+        document.getElementById("destlat").value =
+          topResult.geometry.location.lat;
+        document.getElementById("destlng").value =
+          topResult.geometry.location.lng;
+
+        // DO THE NEXT STEP.... @todo: call this from the same parent ?
+        console.log("getting directions (steps)...");
+        await getDirections();
+        console.log("setting course...");
+        doMapStuff();
+      },
+      (error) => {
+        console.error("geolocation error: " + error);
+      },
+      {
+        enableHighAccuracy: enableHighAccuracy,
+      }
+    );
   } else {
     console.log("Geolocation is not supported by this browser.(find bakeries)");
   }
+};
+
+//--------------- MAP STUFF -------------------
+
+let map;
+let userMarker;
+let pathPolyline;
+let currentStepIndex = 0;
+let steps;
+
+const endpointAccuracyMeters = 5; // How close to the endpoint you must be to trigger the next step.
+
+// Get directions.
+document.getElementById("getdirections").addEventListener("click", async () => {
+  getDirections();
 });
 
-// get directions
-// find something
-document.getElementById("getdirections").addEventListener("click", async () => {
-  console.log("...get directions...");
+// This function is just for skipping steps to read them out.
+document.getElementById("nextdirection").addEventListener("click", async () => {
+  currentStepIndex++;
+  speakStep(steps, currentStepIndex);
+});
 
+const getDirections = async () => {
   const directionsElement = document.getElementById("directionsElement");
-
-  directionsElement.innerHTML = ". . . fetching . . .";
-
+  directionsElement.innerHTML = ". . . fetching directions . . .";
   const [startLat, startLng, destLat, destLng] = [
     document.getElementById("startlat").value,
     document.getElementById("startlng").value,
     document.getElementById("destlat").value,
     document.getElementById("destlng").value,
   ];
-
   if (startLat && startLng && destLat && destLng) {
-    // Send this to the backend
-    const response = await fetch("/getdirections", {
+    const response = await fetch("./getdirections", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({ startLat, startLng, destLat, destLng }),
     });
-
     const data = await response.json();
-    const steps = data.routes[0].legs[0].steps;
+    steps = data.routes[0].legs[0].steps;
 
+    // speak the first step right away.
+    speakStep(steps, 0);
+
+    // Display all steps:
     console.log("steps: ", steps);
-
-    steps.forEach((step, i) => {
-      const stepElement = document.createElement("p");
-      stepElement.innerHTML = step.html_instructions;
-      directionsElement.appendChild(stepElement);
+    let stepsText = "";
+    steps.forEach((step) => {
+      stepsText += step.html_instructions + "<br/>";
     });
+    directionsElement.innerHTML = `${steps.length} steps. <br/> ${stepsText}`;
   }
-});
-
-//--------------- MAP STUFF -------------------
-
-// const getUserLocation = async () => {
-//   return navigator.geolocation.getCurrentPosition(async (position) => {
-//     return position.coords;
-//   });
-// };
-
-let map, userMarker, pathPolyline;
-let currentStepIndex = 0;
-
-let steps = [
-  {
-    distance: {
-      text: "28 m",
-      value: 28,
-    },
-    duration: {
-      text: "1 min",
-      value: 7,
-    },
-    end_location: {
-      lat: 49.2583035,
-      lng: -123.1292333,
-    },
-    html_instructions: "Head <b>west</b> toward <b>Spruce St</b>",
-    polyline: {
-      points: "iwskHhronVAjA",
-    },
-    start_location: {
-      lat: 49.2582938,
-      lng: -123.1288497,
-    },
-    travel_mode: "DRIVING",
-  },
-  {
-    distance: {
-      text: "55 m",
-      value: 55,
-    },
-    duration: {
-      text: "1 min",
-      value: 16,
-    },
-    end_location: {
-      lat: 49.2578065,
-      lng: -123.1292804,
-    },
-    html_instructions: "Turn <b>left</b> onto <b>Spruce St</b>",
-    maneuver: "turn-left",
-    polyline: {
-      points: "kwskHttonV`BH",
-    },
-    start_location: {
-      lat: 49.2583035,
-      lng: -123.1292333,
-    },
-    travel_mode: "DRIVING",
-  },
-  {
-    distance: {
-      text: "0.1 km",
-      value: 128,
-    },
-    duration: {
-      text: "1 min",
-      value: 32,
-    },
-    end_location: {
-      lat: 49.257814,
-      lng: -123.1275184,
-    },
-    html_instructions:
-      'Turn <b>left</b> onto <b>W 15th Ave</b><div style="font-size:0.9em">Destination will be on the right</div>',
-    maneuver: "turn-left",
-    polyline: {
-      points: "itskH~tonV?mBAuE?O@I?A",
-    },
-    start_location: {
-      lat: 49.2578065,
-      lng: -123.1292804,
-    },
-    travel_mode: "DRIVING",
-  },
-];
-
-const userLocation = { lat: 49.2583077, lng: -123.1288489 }; // Placeholder for the initial user location
+};
 
 window.initMap = () => {
+  console.log("<><><><><> INIT MAP!!!");
   map = new google.maps.Map(document.getElementById("map"), {
-    center: userLocation,
+    center: userInitialPosition,
     zoom: 18,
   });
 
   // Marker for user's location
   userMarker = new google.maps.Marker({
-    position: userLocation,
+    position: userInitialPosition,
     map: map,
     title: "Your Location",
   });
 
   // Initial path polyline setup
   pathPolyline = new google.maps.Polyline({
-    path: [userLocation, steps[currentStepIndex].end_location],
+    path: [userInitialPosition, steps[currentStepIndex].end_location],
     geodesic: true,
-    strokeColor: "#FF0000",
-    strokeOpacity: 1.0,
+    strokeColor: "#00FF00",
+    strokeOpacity: 0.9,
     strokeWeight: 5,
   });
   pathPolyline.setMap(map);
 
   // Display the first set of instructions
   updateInstructions();
+};
+
+// Util functions for speaking the steps
+function removeHTMLTagsUsingDOMParser(htmlString) {
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(htmlString, "text/html");
+  return doc.body.textContent || "";
+}
+const speakStep = (theSteps, index) => {
+  console.log("step at index: ", theSteps[index]);
+  // Remove the HTML tags and then speak the step out loud.
+  const instructions = removeHTMLTagsUsingDOMParser(
+    theSteps[index].html_instructions
+  );
+  const spokenStepIndex = index + 1;
+  speakBack("Step " + spokenStepIndex + ". " + instructions);
 };
 
 function updateUserLocation() {
@@ -345,7 +322,19 @@ function updateUserLocation() {
         lat: position.coords.latitude,
         lng: position.coords.longitude,
       };
+
+      console.log("usermarker: ", userMarker);
+
       userMarker.setPosition(newPos);
+
+      console.log(
+        "newPost: ",
+        newPos,
+        "steps[..].end_location: ",
+        steps[currentStepIndex].end_location,
+        " pathPolyline: ",
+        pathPolyline
+      );
 
       // Update the polyline to point from the new position to the next step's end location
       pathPolyline.setPath([newPos, steps[currentStepIndex].end_location]);
@@ -359,7 +348,9 @@ function updateUserLocation() {
       console.log("distance to next checkpoint: ", distanceToCheckpoint);
 
       // When close enough to the end of the current step, advance to the next step
-      if (distanceToCheckpoint < 5) {
+      if (distanceToCheckpoint < endpointAccuracyMeters) {
+        speakStep(steps, currentStepIndex);
+
         // meters
         currentStepIndex++;
         if (currentStepIndex < steps.length) {
@@ -369,10 +360,10 @@ function updateUserLocation() {
         }
       }
     },
-    (err) => console.warn("ERROR OH NOES! (" + err.code + "): " + err.message),
+    (err) => console.warn("ERROR: (" + err.code + "): " + err.message),
     {
       enableHighAccuracy: true,
-      timeout: 5000, // 10 seconds
+      timeout: 5000, // the amound of time that should pass when triggering a timout.
       maximumAge: 0,
     }
   );
@@ -394,6 +385,73 @@ function loadGoogleMapsAPI() {
   script.defer = true;
   document.head.appendChild(script);
 }
-loadGoogleMapsAPI();
 
-updateUserLocation(); // recursively calls forever.
+// Button click to start maps stuff.
+const updateUserLocationButton = document.getElementById("updateUserLocation");
+updateUserLocationButton.addEventListener("click", async () => {
+  doMapStuff();
+});
+
+const doMapStuff = () => {
+  console.log("OK LETS MAP IT!");
+  updateUserLocationButton.setAttribute("disabled", "disabled");
+  loadGoogleMapsAPI();
+  updateUserLocation(); // recursively calls forever.
+};
+
+getMyCurrentLocation();
+
+// ------------------ POLY Speech -------------------- //
+
+const defaultPolyVoice = "Joey";
+
+let isSpeaking = false;
+const speakQueue = [];
+
+const speakPolly = (message, name) => {
+  // Add to queue if there is speaking in progress.
+  if (isSpeaking) {
+    speakQueue.push({
+      message,
+      name,
+    });
+  }
+  isSpeaking = true;
+
+  const voiceName = name || defaultPolyVoice;
+  const messageConfig = {
+    message: message,
+    name: voiceName,
+  };
+  fetch("./speak", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(messageConfig),
+  })
+    .then((response) => response.blob())
+    .then((blob) => {
+      const audioUrl = URL.createObjectURL(blob);
+      const audio = new Audio(audioUrl);
+
+      // Manage a speaking queue
+      audio.onended = () => {
+        if (speakQueue.length) {
+          speakPolly(...Object.values(speakQueue[0]));
+          speakQueue.shift();
+        }
+        isSpeaking = false;
+      };
+
+      // Play the audio file.
+      audio.play();
+    })
+    .catch((error) => console.error("Error:", error));
+};
+
+// Manual test of the poly service
+document.getElementById("pollyButton").addEventListener("click", function () {
+  const voiceName = document.getElementById("pollyVoice").value || "Joey";
+  speakPolly("Hi there, my name is " + voiceName, voiceName);
+});

@@ -2,29 +2,40 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Chat GPT App</title>
+    <title>GuideGPT</title>
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
-    <h1>Ai Chat (ChatGPT)</h1>
+    <h1>GuideGPT</h1>
+    <button id="pollyButton">Polly Test</button>
+    <select name="pollyVoice" id="pollyVoice">
+      <!-- Commented out names did not work -->
+      <!-- <option value="Danielle">Danielle</option> -->
+      <option value="Salli" selected>Salli</option>
+      <option value="Kimberly">Kimberly</option>
+      <option value="Kendra">Kendra</option>
+      <option value="Joanna">Joanna</option>
+      <option value="Ivy">Ivy (kid)</option>
+      <!-- <option value="Ruth">Ruth</option> -->
+      <!-- <option value="Gregory">Gregory</option> -->
+      <!-- <option value="Kevin">Kevin</option> -->
+      <option value="Matthew">Matthew</option>
+      <option value="Justin">Justin (kid)</option>
+      <option value="Joey">Joey</option>
+      <!-- <option value="Stephen">Stephen</option> -->
+    </select>
     <main>
       <div id="chatlog">
-        <p class="log">
-          <span class="msgcost">$0.00</span><span class="logname">host</span
-          ><message class="logmessage">chat started</message>
-        </p>
+        <p class="log"></p>
       </div>
     </main>
     <div id="chatinputwrapper">
       <input type="text" id="chatinput" />
       <button id="sendbutton">Send</button>
+      <button id="startlistening">Speak</button>
+      <span id="speaktext"></span>
     </div>
     <script src="main.js" type="module"></script>
-
-    <hr />
-
-    <button id="startlistening">Start Listening</button>
-    <span id="speaktext"></span>
 
     <hr />
 
@@ -37,14 +48,15 @@
       <h3>Find by Keyword and Type</h3>
       <label for="findkeyword">Keyword: </label>
       <input type="text" name="findkeyword" id="findkeyword" />
-      <select id="findtype" value="bakery">
+      <select id="findtype">
+        <option value="" selected></option>
         <option value="accounting">accounting</option>
         <option value="airport">airport</option>
         <option value="amusement_park">amusement_park</option>
         <option value="aquarium">aquarium</option>
         <option value="art_gallery">art_gallery</option>
         <option value="atm">atm</option>
-        <option value="bakery" selected>bakery</option>
+        <option value="bakery">bakery</option>
         <option value="bank">bank</option>
         <option value="bar">bar</option>
         <option value="beauty_salon">beauty_salon</option>
@@ -144,19 +156,22 @@
 
     <div>
       <span>Start lat/lng: </span>
-      <input type="text" id="startlat" value="49.2583077" />
-      <input type="text" id="startlng" value="-123.1288489" />
+      <input type="text" id="startlat" />
+      <input type="text" id="startlng" />
       <span>Destination lat/lng: </span>
-      <input type="text" id="destlat" value="49.2576478" />
-      <input type="text" id="destlng" value="-123.1275244" />
+      <input type="text" id="destlat" />
+      <input type="text" id="destlng" />
     </div>
 
     <hr />
 
     <button id="getdirections">Get Directions</button>
-    <div id="directionsElement"></div>
+    <button id="nextdirection">Next -></button>
+    <div id="currentDirections">...</div>
+    <div id="directionsElement">...</div>
 
-    <hr />
+    <button id="updateUserLocation">Start Tracking</button>
+    <div id="directionsElement"></div>
 
     <div id="map" style="height: 400px; width: 100%"></div>
     <p id="instructions"></p>

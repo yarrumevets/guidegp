@@ -1,5 +1,4 @@
 body {
-  background-color: lightgray;
   font-family: Verdana, Geneva, Tahoma, sans-serif;
   color: black;
 }
@@ -86,7 +85,13 @@ button {
   background-color: brown;
   color: ivory;
   border: 1px solid ivory;
-  width: calc(30% - 6px);
+  width: 200px;
+}
+
+button:disabled {
+  background-color: lightgrey;
+  color: darkgrey;
+  border: 1px solid darkslategrey;
 }
 
 /* --------------------- map stuff -------------------- */

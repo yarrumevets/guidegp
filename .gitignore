@@ -2,3 +2,4 @@
 node_modules/
 googleMapsApi.json
 openaiApiCreds.json
+awsApiCreds.json

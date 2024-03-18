@@ -251,6 +251,64 @@ app.post("/speak", async (req, res) => {
   }
 });
 
+// -------------------------- Static maps stuff ----------------------------
+
+const createGoogleStaticMapUrl = (reqBody) => {
+  const { coords, zoom, size, startMarker, endMarker } = reqBody;
+  const { startLat, startLng, endLat, endLng } = coords;
+  const apiKey = process.env.GOOGLE_API_KEY;
+  const baseUrl = "https://maps.googleapis.com/maps/api/staticmap";
+  let mapUrl;
+  // Map with single (start) location, start and end locations, or a default hardcoded arbitrary location.
+  if (startLat && endLat && startLng && endLng) {
+    const path = `path=color:0xff0000ff|weight:5|${startLat},${startLng}|${endLat},${endLng}`;
+    mapUrl = `${baseUrl}?size=${size}&zoom=${zoom}&${path}&key=${googleMapsApiKey}`;
+  } else if (startLat && startLng) {
+    mapUrl = `${baseUrl}?center=${startLat},${startLng}&zoom=${zoom}&size=${size}&key=${googleMapsApiKey}`;
+  } else {
+    // Just some random location. @TODO: Find a more useful default here.
+    mapUrl = `${baseUrl}?center=10.0000,10.0000&zoom=10&size=${size}&key=${googleMapsApiKey}`;
+  }
+
+  console.log("sm: ", startMarker, " --- em: ", endMarker);
+  mapUrl += startMarker ? `&${startMarker}` : "";
+  mapUrl += endMarker ? `&${endMarker}` : "";
+
+  // Road color
+  mapUrl += "&style=feature:road|element:geometry|color:0x555555";
+  mapUrl += "&style=feature:landscape|element:geometry.fill|color:0x333333";
+
+  // Hide all labels except roads and parks.
+  mapUrl += "&style=feature:all|element:labels|visibility:off";
+  mapUrl += "&style=feature:road|element:labels.text|visibility:on";
+  mapUrl += "&style=feature:park|element:labels.text|visibility:on";
+
+  console.log("<><><> map url: ", mapUrl);
+
+  return mapUrl;
+};
+
+// Generate a static map URL. API exposed to FE in URL.
+app.post("/staticmapurl", async (req, res) => {
+  const mapUrl = createGoogleStaticMapUrl(req.body);
+  res.send({ mapUrl });
+});
+
+// Generate a static map image. API key not exposed to FE.
+app.post("/staticmap", async (req, res) => {
+  const mapUrl = createGoogleStaticMapUrl(req.body);
+  try {
+    const response = await fetch(mapUrl);
+    const arrayBuffer = await response.arrayBuffer();
+    const buffer = Buffer.from(arrayBuffer);
+    res.set("Content-Type", "image/png");
+    res.send(buffer);
+  } catch (error) {
+    console.error("Error fetching static map:", error);
+    res.status(500).send("Error fetching map image.");
+  }
+});
+
 // <><><><><><><><><><><><><><><><><><><><> START SERVER <><><><><><><><><><><><><><><><><><><><><><><><><><> //
 
 app.listen(port, () => {

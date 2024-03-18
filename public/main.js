@@ -452,3 +452,105 @@ document
   .addEventListener("click", function () {
     document.getElementById("advanced").toggleAttribute("hidden");
   });
+
+// -------------------- static maps - protects from exposing api key ----------------------- //
+
+function fetchMapImageUrl(staticMapCoords, zoom, size, startMarker, endMarker) {
+  fetch(`./staticmapurl`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      coords: staticMapCoords,
+      zoom: zoom,
+      size: size,
+      startMarker,
+      endMarker,
+    }),
+  })
+    .then((response) => response.json())
+    .then((data) => {
+      const imgElement = document.createElement("img");
+      imgElement.src = data.mapUrl;
+      document.body.appendChild(imgElement);
+    })
+    .catch((error) => console.error("Error fetching static map:", error));
+}
+
+const fetchMapImage = async (
+  staticMapCoords,
+  zoom,
+  size,
+  startMarker,
+  endMarker
+) => {
+  console.log("fetching image data...");
+  const response = await fetch("./staticmap", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      coords: staticMapCoords,
+      zoom: zoom,
+      size: size,
+      startMarker,
+      endMarker,
+    }),
+  });
+  const imageBlob = await response.blob();
+  document.getElementById("mapimage").src = URL.createObjectURL(imageBlob);
+};
+
+// Utility to check that images for markers exist.
+const isImageAvailable = async (imageUrl) => {
+  try {
+    const response = await fetch(imageUrl, {
+      method: "HEAD", // Use HEAD to fetch headers only, for efficiency
+      mode: "no-cors", // This might be necessary depending on CORS policies
+    });
+    // If the status code is in the 200-299 range, the image exists.
+    return response.ok;
+  } catch (error) {
+    console.error(`Error checking image (${imageUrl}):`, error);
+    return false; // Assuming false if there's an error like network issues
+  }
+};
+
+function setupStaticMap() {
+  const viewportWidth = document.documentElement.clientWidth;
+  const startLat = document.getElementById("startlat").value;
+  const endLat = document.getElementById("destlat").value;
+  const startLng = document.getElementById("startlng").value;
+  const endLng = document.getElementById("destlng").value;
+  const staticMapCoords = {
+    startLat,
+    endLat,
+    startLng,
+    endLng,
+  };
+
+  // URLs of your custom icons
+  // https://developers.google.com/maps/documentation/maps-static/start#CustomIcons
+  const startIconUrl = encodeURIComponent("https://goo.gl/5y3S82");
+  const endIconUrl = encodeURIComponent("http://tinyurl.com/jrhlvu6");
+  const startMarker =
+    startLat && startLng
+      ? `markers=icon:${startIconUrl}|${startLat},${startLng}`
+      : null;
+  const endMarker =
+    endLat && endLng ? `markers=icon:${endIconUrl}|${endLat},${endLng}` : null;
+
+  fetchMapImage(
+    staticMapCoords,
+    "16",
+    `${Math.min(viewportWidth, 900)}x500`,
+    startMarker,
+    endMarker
+  );
+}
+
+document
+  .getElementById("staticmapbutton")
+  .addEventListener("click", function () {
+    setupStaticMap();
+  });
